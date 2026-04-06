@@ -1,0 +1,92 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: bugsink
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -h db      
+      retries: 5
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+
+  web:
+    image: bugsink/bugsink:2
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      CREATE_SUPERUSER: ${WEB_USER}:${WEB_PASSWORD}
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@db:5432/bugsink
+      BEHIND_HTTPS_PROXY: "true"
+      USE_X_FORWARDED_HOST: "true"
+      BASE_URL: ${BASE_URL}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:3000/\").raise_for_status()'"]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+
+  nginx:
+    restart: unless-stopped
+    sysctls:
+      - net.core.somaxconn=512
+    build: ./nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/static/:/var/www/local_static/:ro
+      - ./nginx/templates:/etc/nginx/templates
+      - ${SSL_DHPARAM}:/etc/nginx/certs/dhparam.pem:ro
+      - ${SSL_CERTIFICATE}:/etc/nginx/certs/cert.pem:ro
+      - ${SSL_CERTIFICATE_KEY}:/etc/nginx/certs/key.pem:ro
+    env_file:
+      - .env
+    environment:
+      - NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.template
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
+    logging:
+      driver: json-file
+      options:
+        max-size: "500m"
+        max-file: "2"
+
+  fail2ban:
+    image: crazymax/fail2ban:latest
+    container_name: fail2ban
+    restart: unless-stopped
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ./fail2ban-data:/data
+      - /var/lib/docker/containers/:/container-logs/:ro
+      - /var/log:/var/log:ro
+    env_file:
+      - .fail2ban.env
+    depends_on:
+      - nginx
+    logging:
+      driver: journald
+      options:
+        tag: fail2ban
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 1g
+
+volumes:
+  db-data:

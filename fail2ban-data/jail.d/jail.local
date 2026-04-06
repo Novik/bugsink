@@ -1,0 +1,81 @@
+# File:
+# "./fail2ban-data/jail.d/jail.local"
+
+# The DEFAULT allows a global definition of the options.
+# They can be override in each jail afterwards.
+
+[DEFAULT]
+# Number of seconds that a host is banned.
+bantime = 1h
+bantime.increment = true
+bantime.factor = 24
+bantime.maxtime = 5w
+logpath = /container-logs/*/*-json.log
+chain = DOCKER-USER
+
+# "ignoreip" can be an IP address, a CIDR mask or a DNS host.
+# Fail2ban will not ban a host which matches an address in this list.
+# Several addresses can be defined using space separator.
+ignoreip = 127.0.0.1/8 172.16.0.1/12 185.32.166.158 176.96.250.131 176.96.251.3 46.150.230.218 85.173.127.0/24 176.114.112.0/20
+
+# attempts must occur within the 5-minute
+findtime = 300
+
+# How many attempts can be made before a ban is imposed
+maxretry = 1
+
+
+[wrong-uri]
+enabled = true
+port = http,https
+filter = wrong-uri
+
+[no-scripts]
+enabled = true
+port = http,https
+filter = no-scripts
+
+[incorrect-methods]
+enabled = true
+port = http,https
+filter = incorrect-methods
+
+[limit-req]
+enabled  = true
+port     = http,https
+filter = limit-req
+maxretry = 3
+
+[delay-req]
+enabled  = false
+port     = http,https
+filter = delay-req
+maxretry = 5
+
+[limit-conn]
+enabled  = true
+port     = http,https
+filter = limit-conn
+maxretry = 3
+
+[permanent]
+enabled = true
+bantime = -1
+logpath = /data/blacklist.txt
+filter  = permanent
+findtime = 99999999
+maxmatches = 0
+
+[ssh]
+enabled = true
+filter  = sshd
+maxretry = 3
+chain = INPUT
+logpath = /var/log/auth.log
+# logtimezone = UTC+0300
+findtime = 600
+
+[badbots]
+enabled  = true
+port     = http,https
+filter = badbots

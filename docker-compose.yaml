@@ -26,14 +26,14 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
-      SECRET_KEY: ${SECRET_KEY}
       CREATE_SUPERUSER: ${WEB_USER}:${WEB_PASSWORD}
       PORT: 3000
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@db:5432/bugsink
       BEHIND_HTTPS_PROXY: "true"
       USE_X_FORWARDED_HOST: "true"
-      BASE_URL: ${BASE_URL}
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:3000/\").raise_for_status()'"]
       interval: 5s

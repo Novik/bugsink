@@ -29,6 +29,12 @@ server {
     ssl_certificate_key /etc/nginx/certs/key.pem;
     ssl_certificate /etc/nginx/certs/cert.pem;
 
+    # This is a mock for sentry-nuxt
+    location /api/0/projects/ {
+        default_type application/json;
+        return 200 '{ "id": 2, "authors": [], "commitCount": 0, "data": {}, "dateCreated": "2019-01-03T00:12:55.109Z", "dateReleased": null, "deployCount": 0, "firstEvent": null, "lastCommit": null, "lastDeploy": null, "lastEvent": null, "newGroups": 0, "owner": null, "projects": [{"name": "Pump Station","slug": "pump-station" }], "ref": "6ba09a7c53235ee8a8fa5ee4c1ca8ca886e7fdbb", "shortVersion": "2.0rc2", "url": null, "version": "2.0rc2" }';
+    }
+    
     location /accounts/login/ {
         limit_req zone=admin burst=5;
         include upstream_params;

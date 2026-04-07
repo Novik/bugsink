@@ -29,11 +29,12 @@ server {
     ssl_certificate_key /etc/nginx/certs/key.pem;
     ssl_certificate /etc/nginx/certs/cert.pem;
 
+    location /accounts/login/ {
+        limit_req zone=admin burst=5;
+        include upstream_params;
+    }
+
     location / {
-        proxy_pass http://web:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        add_header Strict-Transport-Security "max-age=31536000; preload" always;
+        include upstream_params;
     }
 }

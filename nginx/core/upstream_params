@@ -1,0 +1,5 @@
+proxy_pass http://web:3000;
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-Proto $scheme;
+add_header Strict-Transport-Security "max-age=31536000; preload" always;

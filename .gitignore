@@ -1,5 +1,6 @@
 # dotenv environment variables file
 .env
+.fail2ban.env
 
 ssl/
 !/ssl/.keep
